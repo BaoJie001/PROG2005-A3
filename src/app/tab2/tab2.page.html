@@ -1,0 +1,201 @@
+<ion-header>
+  <ion-toolbar class="modern-toolbar">
+    <ion-title class="modern-title">Add & Featured</ion-title>
+    <ion-buttons slot="end">
+      <ion-button class="modern-button" (click)="refresh()">
+        <ion-icon slot="icon-only" name="refresh-outline"></ion-icon>
+      </ion-button>
+      <ion-button class="modern-button help-button" (click)="showHelp()">
+        <ion-icon slot="icon-only" name="help-circle-outline"></ion-icon>
+      </ion-button>
+    </ion-buttons>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content [fullscreen]="true" class="modern-content">
+  <div class="hero-section">
+    <div class="hero-content">
+      <h1 class="hero-title">Add New Item</h1>
+      <p class="hero-subtitle">Create a new inventory record</p>
+    </div>
+    <div class="hero-decoration"></div>
+  </div>
+
+  <div class="form-container">
+    <h2 class="section-title">Item Details</h2>
+    <div class="section-line"></div>
+    
+    <form (ngSubmit)="addItem()" #itemForm="ngForm">
+      <div class="form-grid">
+        <div class="form-group">
+          <ion-label>Item Name *</ion-label>
+          <ion-input
+            type="text"
+            name="item_name"
+            [(ngModel)]="newItem.item_name"
+            required
+            placeholder="Enter item name"
+            class="form-input"
+          ></ion-input>
+        </div>
+
+        <div class="form-group">
+          <ion-label>Category *</ion-label>
+          <ion-input
+            type="text"
+            name="category"
+            [(ngModel)]="newItem.category"
+            required
+            placeholder="Enter category"
+            class="form-input"
+          ></ion-input>
+        </div>
+
+        <div class="form-group">
+          <ion-label>Quantity *</ion-label>
+          <ion-input
+            type="number"
+            name="quantity"
+            [(ngModel)]="newItem.quantity"
+            required
+            min="0"
+            placeholder="Enter quantity"
+            class="form-input"
+          ></ion-input>
+        </div>
+
+        <div class="form-group">
+          <ion-label>Price *</ion-label>
+          <ion-input
+            type="number"
+            name="price"
+            [(ngModel)]="newItem.price"
+            required
+            min="0"
+            step="0.01"
+            placeholder="Enter price"
+            class="form-input"
+          ></ion-input>
+        </div>
+
+        <div class="form-group">
+          <ion-label>Supplier</ion-label>
+          <ion-input
+            type="text"
+            name="supplier_name"
+            [(ngModel)]="newItem.supplier_name"
+            placeholder="Enter supplier name"
+            class="form-input"
+          ></ion-input>
+        </div>
+
+        <div class="form-group">
+          <ion-label>Stock Status *</ion-label>
+          <ion-select
+            name="stock_status"
+            [(ngModel)]="newItem.stock_status"
+            required
+            interface="popover"
+            class="form-select"
+          >
+            <ion-select-option value="in stock">In Stock</ion-select-option>
+            <ion-select-option value="low stock">Low Stock</ion-select-option>
+            <ion-select-option value="out of stock">Out of Stock</ion-select-option>
+          </ion-select>
+        </div>
+
+        <div class="form-group full-width">
+          <ion-label>Special Note</ion-label>
+          <ion-textarea
+            name="special_note"
+            [(ngModel)]="newItem.special_note"
+            placeholder="Enter special notes (optional)"
+            class="form-textarea"
+          ></ion-textarea>
+        </div>
+
+        <div class="form-group full-width">
+          <ion-checkbox
+            name="featured_item"
+            [(ngModel)]="newItem.featured_item"
+            class="featured-checkbox"
+          >
+            Mark as Featured Item
+          </ion-checkbox>
+        </div>
+      </div>
+
+      <div class="form-actions">
+        <ion-button type="button" fill="outline" (click)="resetForm()">
+          Reset
+        </ion-button>
+        <ion-button type="submit" [disabled]="!itemForm.form.valid" class="primary-button">
+          Add Item
+        </ion-button>
+      </div>
+    </form>
+  </div>
+
+  <div class="section-header">
+    <h2 class="section-title">Featured Items</h2>
+    <div class="section-line"></div>
+  </div>
+
+  <div *ngIf="loading" class="loading-container">
+    <div class="loading-spinner"></div>
+    <p>Loading featured items...</p>
+  </div>
+
+  <div *ngIf="error" class="error-container">
+    <ion-icon name="alert-circle-outline"></ion-icon>
+    <p>{{ error }}</p>
+    <ion-button size="small" (click)="loadFeaturedItems()">Try Again</ion-button>
+  </div>
+
+  <div *ngIf="!loading && !error" class="items-list">
+    <div *ngFor="let item of featuredItems; let i = index" class="item-card featured">
+      <div class="item-header">
+        <div class="item-name-container">
+          <h3 class="item-name" [style.color]="getStockColor(item.stock_status)">{{ item.item_name }}</h3>
+          <span class="stock-badge" [class]="'badge-' + item.stock_status.toLowerCase().replace(' ', '-')">
+            <span class="badge-dot"></span>
+            {{ item.stock_status }}
+          </span>
+        </div>
+        <div class="featured-badge">
+          <ion-icon name="star"></ion-icon>
+        </div>
+      </div>
+
+      <div class="item-details">
+        <div class="detail-row">
+          <ion-icon name="pricetag-outline"></ion-icon>
+          <span>{{ item.category }}</span>
+        </div>
+        <div class="detail-row">
+          <ion-icon name="cube-outline"></ion-icon>
+          <span>{{ item.quantity }} units</span>
+        </div>
+        <div class="detail-row">
+          <ion-icon name="cash-outline"></ion-icon>
+          <span>${{ item.price.toFixed(2) }}</span>
+        </div>
+        <div class="detail-row" *ngIf="item.supplier_name">
+          <ion-icon name="business-outline"></ion-icon>
+          <span>{{ item.supplier_name }}</span>
+        </div>
+      </div>
+
+      <div *ngIf="item.special_note" class="special-note">
+        <ion-icon name="information-circle-outline"></ion-icon>
+        {{ item.special_note }}
+      </div>
+    </div>
+  </div>
+
+  <div *ngIf="!loading && !error && featuredItems.length === 0" class="empty-state">
+    <ion-icon name="star-outline"></ion-icon>
+    <h3>No Featured Items</h3>
+    <p>Mark items as featured to see them here</p>
+  </div>
+</ion-content>
