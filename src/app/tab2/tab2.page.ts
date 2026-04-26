@@ -1,9 +1,3 @@
-/**
- * Tab2Page
- * 
- * This page allows users to add new inventory items and view featured items.
- * It provides a form for creating new items and displays a list of featured items.
- */
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -32,8 +26,7 @@ import { Subscription } from 'rxjs';
   imports: [IonicModule, CommonModule, FormsModule]
 })
 export class Tab2Page implements OnInit, OnDestroy {
-  // New item form data
-  newItem: Partial<InventoryItem> = {
+  newItem: any = {
     item_name: '',
     category: '',
     quantity: 0,
@@ -44,23 +37,14 @@ export class Tab2Page implements OnInit, OnDestroy {
     special_note: ''
   };
   
-  // Featured items data
   featuredItems: InventoryItem[] = [];
-  
-  // UI state
   loading = true;
   error = '';
   
-  // Subscriptions for API calls
   private inventorySubscription: Subscription | null = null;
   private addItemSubscription: Subscription | null = null;
 
-  /**
-   * Constructor
-   * @param inventoryService - Service for inventory API operations
-   */
   constructor(private inventoryService: InventoryService) {
-    // Register required icons for the page
     addIcons({
       refreshOutline,
       helpCircleOutline,
@@ -75,18 +59,10 @@ export class Tab2Page implements OnInit, OnDestroy {
     });
   }
 
-  /**
-   * Initialize the component
-   * Loads featured items on component initialization
-   */
   ngOnInit() {
     this.loadFeaturedItems();
   }
 
-  /**
-   * Clean up resources
-   * Unsubscribes from API calls to prevent memory leaks
-   */
   ngOnDestroy() {
     if (this.inventorySubscription) {
       this.inventorySubscription.unsubscribe();
@@ -96,14 +72,9 @@ export class Tab2Page implements OnInit, OnDestroy {
     }
   }
 
-  /**
-   * Load featured items from API
-   * Filters items where featured_item is 1
-   */
   loadFeaturedItems() {
     this.loading = true;
     
-    // Cancel any existing subscription to avoid duplicate requests
     if (this.inventorySubscription) {
       this.inventorySubscription.unsubscribe();
     }
@@ -123,18 +94,60 @@ export class Tab2Page implements OnInit, OnDestroy {
     });
   }
 
-  /**
-   * Add a new inventory item
-   * Validates form data and calls API to add the item
-   */
+  updateItemName(event: any) {
+    this.newItem.item_name = event.target.value;
+  }
+
+  updateCategory(event: any) {
+    this.newItem.category = event.target.value;
+  }
+
+  updateQuantity(event: any) {
+    this.newItem.quantity = parseInt(event.target.value) || 0;
+  }
+
+  updatePrice(event: any) {
+    this.newItem.price = parseFloat(event.target.value) || 0;
+  }
+
+  updateSupplier(event: any) {
+    this.newItem.supplier_name = event.target.value;
+  }
+
+  updateStockStatus(event: any) {
+    this.newItem.stock_status = event.target.value;
+  }
+
+  updateSpecialNote(event: any) {
+    this.newItem.special_note = event.target.value;
+  }
+
+  updateFeatured(event: any) {
+    this.newItem.featured_item = event.target.checked ? 1 : 0;
+  }
+
   addItem() {
-    // Validate required fields
-    if (!this.newItem.item_name || !this.newItem.category || !this.newItem.quantity || !this.newItem.price || !this.newItem.stock_status) {
+    console.log('Add item called');
+    console.log('Form data:', this.newItem);
+    
+    if (!this.newItem.item_name) {
+      alert('Please enter item name');
+      return;
+    }
+    if (!this.newItem.category) {
+      alert('Please enter category');
+      return;
+    }
+    if (!this.newItem.quantity || this.newItem.quantity <= 0) {
+      alert('Please enter valid quantity');
+      return;
+    }
+    if (!this.newItem.price || this.newItem.price <= 0) {
+      alert('Please enter valid price');
       return;
     }
 
-    // Prepare item data for API call
-    const itemToAdd: Omit<InventoryItem, 'item_id'> = {
+    const itemToAdd: any = {
       item_name: this.newItem.item_name,
       category: this.newItem.category,
       quantity: this.newItem.quantity,
@@ -147,7 +160,6 @@ export class Tab2Page implements OnInit, OnDestroy {
 
     this.loading = true;
     
-    // Cancel any existing subscription to avoid duplicate requests
     if (this.addItemSubscription) {
       this.addItemSubscription.unsubscribe();
     }
@@ -157,21 +169,17 @@ export class Tab2Page implements OnInit, OnDestroy {
         console.log('Item added successfully:', addedItem);
         this.resetForm();
         this.loadFeaturedItems();
-        // Show success message
         alert('Item added successfully!');
       },
       error: (err) => {
         console.error('Error adding item:', err);
         this.error = `Failed to add item: ${err.message || 'Unknown error'}`;
         this.loading = false;
+        alert('Failed to add item: ' + (err.message || 'Unknown error'));
       }
     });
   }
 
-  /**
-   * Reset the new item form
-   * Clears all form fields to their default values
-   */
   resetForm() {
     this.newItem = {
       item_name: '',
@@ -185,32 +193,18 @@ export class Tab2Page implements OnInit, OnDestroy {
     };
   }
 
-  /**
-   * Refresh featured items
-   * Reloads featured items from the API
-   */
   refresh() {
-    // Force a full page reload to ensure data is refreshed in Android
-    window.location.reload();
+    this.loadFeaturedItems();
   }
 
-  /**
-   * Get color based on stock status
-   * @param status - Stock status
-   * @returns Color code for the status
-   */
   getStockColor(status: string) {
-    const lowerStatus = status?.toLowerCase() || '';
+    const lowerStatus = (status || '').toLowerCase();
     if (lowerStatus === 'in stock') return '#10b981';
     if (lowerStatus === 'low stock') return '#f59e0b';
     if (lowerStatus === 'out of stock') return '#ef4444';
     return '#333';
   }
 
-  /**
-   * Show help information
-   * Displays a dialog with information about stock status colors and form usage
-   */
   showHelp() {
     alert('Green = In Stock\nOrange = Low Stock\nRed = Out of Stock\n\nTo add a new item, fill out all required fields marked with *');
   }

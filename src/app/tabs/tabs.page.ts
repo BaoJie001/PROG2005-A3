@@ -1,7 +1,7 @@
 import { Component, EnvironmentInjector, inject } from '@angular/core';
 import { IonTabs, IonTabBar, IonTabButton, IonIcon, IonLabel } from '@ionic/angular/standalone';
 import { addIcons } from 'ionicons';
-import { home, list, settings, cube, calculator, settingsOutline, shieldCheckmark } from 'ionicons/icons';
+import { cube, addCircleOutline, createOutline, shieldCheckmark } from 'ionicons/icons';
 
 @Component({
   selector: 'app-tabs',
@@ -13,6 +13,6 @@ export class TabsPage {
   public environmentInjector = inject(EnvironmentInjector);
 
   constructor() {
-    addIcons({ home, list, settings, cube, calculator, settingsOutline, shieldCheckmark });
+    addIcons({ cube, addCircleOutline, createOutline, shieldCheckmark });
   }
 }

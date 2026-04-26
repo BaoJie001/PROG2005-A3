@@ -26,10 +26,10 @@
       <ion-icon class="search-icon" name="search-outline"></ion-icon>
       <input
         type="text"
-        class="search-input"
+        class="search-input-native"
         placeholder="Search items by name, category, or supplier..."
-        [(ngModel)]="searchTerm"
-        (ngModelChange)="onSearchChange()"
+        [value]="searchTerm"
+        (input)="onSearchChange($event)"
       >
       <ion-button *ngIf="searchTerm" class="clear-button" fill="clear" size="small" (click)="clearSearch()">
         <ion-icon name="close-circle-outline"></ion-icon>
@@ -65,12 +65,12 @@
     </div>
     <div class="sort-section">
       <h3>Sort By</h3>
-      <ion-select [(ngModel)]="sortField" (ionChange)="onSortChange()" interface="popover">
-        <ion-select-option value="item_name">Name</ion-select-option>
-        <ion-select-option value="category">Category</ion-select-option>
-        <ion-select-option value="price">Price</ion-select-option>
-        <ion-select-option value="quantity">Quantity</ion-select-option>
-      </ion-select>
+      <select class="sort-select-native" [value]="sortField" (change)="onSortChange($event)">
+        <option value="item_name">Name</option>
+        <option value="category">Category</option>
+        <option value="price">Price</option>
+        <option value="quantity">Quantity</option>
+      </select>
     </div>
   </div>
 
@@ -177,10 +177,5 @@
     <h3>No Results</h3>
     <p>No items match your search</p>
     <ion-button size="small" (click)="clearSearch()">Clear Search</ion-button>
-  </div>
-
-  <!-- 测试滚动区域 -->
-  <div style="height: 800px; background: lightblue; margin-top: 20px;">
-    Test scroll area - if you see this blue area and can scroll down, scrolling works
   </div>
 </ion-content>

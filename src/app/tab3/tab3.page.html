@@ -21,50 +21,111 @@
     <div class="hero-decoration"></div>
   </div>
 
+  <!-- 更新表单 - 放在顶部，点击Edit后显示 -->
+  <div *ngIf="selectedItem" class="update-form-container">
+    <h2 class="section-title">Update Item</h2>
+    <div class="section-line"></div>
+    
+    <div class="form-group">
+      <ion-label>Item Name *</ion-label>
+      <input type="text" class="form-input-native" [value]="selectedItem.item_name" (input)="updateSelectedItemField('item_name', $event)">
+    </div>
+
+    <div class="form-group">
+      <ion-label>Category *</ion-label>
+      <input type="text" class="form-input-native" [value]="selectedItem.category" (input)="updateSelectedItemField('category', $event)">
+    </div>
+
+    <div class="form-group">
+      <ion-label>Quantity *</ion-label>
+      <input type="number" class="form-input-native" [value]="selectedItem.quantity" (input)="updateSelectedItemField('quantity', $event)">
+    </div>
+
+    <div class="form-group">
+      <ion-label>Price *</ion-label>
+      <input type="number" class="form-input-native" [value]="selectedItem.price" (input)="updateSelectedItemField('price', $event)">
+    </div>
+
+    <div class="form-group">
+      <ion-label>Supplier</ion-label>
+      <input type="text" class="form-input-native" [value]="selectedItem.supplier_name" (input)="updateSelectedItemField('supplier_name', $event)">
+    </div>
+
+    <div class="form-group">
+      <ion-label>Stock Status *</ion-label>
+      <select class="form-select-native" [value]="selectedItem.stock_status" (change)="updateSelectedItemStatus($event)">
+        <option value="in stock">In Stock</option>
+        <option value="low stock">Low Stock</option>
+        <option value="out of stock">Out of Stock</option>
+      </select>
+    </div>
+
+    <div class="form-group full-width">
+      <label class="checkbox-label">
+        <input type="checkbox" [checked]="selectedItem.featured_item === 1" (change)="updateSelectedItemFeatured($event)">
+        <span>Mark as Featured Item</span>
+      </label>
+    </div>
+
+    <div class="form-group full-width">
+      <ion-label>Special Note</ion-label>
+      <textarea class="form-textarea-native" [value]="selectedItem.special_note" (input)="updateSelectedItemField('special_note', $event)" rows="3"></textarea>
+    </div>
+
+    <div class="form-actions">
+      <ion-button fill="outline" (click)="cancelUpdate()">Cancel</ion-button>
+      <ion-button (click)="updateItem()">Update Item</ion-button>
+    </div>
+  </div>
+
+  <!-- 搜索框 -->
   <div class="search-container">
     <div class="search-box">
       <ion-icon name="search" class="search-icon"></ion-icon>
-      <ion-input
+      <input
         type="text"
+        class="search-input-native"
         placeholder="Search by item name..."
-        [(ngModel)]="searchTerm"
-        (ionInput)="searchItems()"
-        class="search-input"
-      ></ion-input>
+        [value]="searchTerm"
+        (input)="onSearchInput($event)"
+      >
       <ion-button *ngIf="searchTerm" (click)="clearSearch()" class="clear-button">
         <ion-icon name="close-circle"></ion-icon>
       </ion-button>
     </div>
   </div>
 
+  <!-- Loading -->
   <div *ngIf="loading" class="loading-container">
     <div class="loading-spinner"></div>
     <p>Loading items...</p>
   </div>
 
+  <!-- Error -->
   <div *ngIf="error" class="error-container">
     <ion-icon name="alert-circle-outline"></ion-icon>
     <p>{{ error }}</p>
     <ion-button size="small" (click)="loadItems()">Try Again</ion-button>
   </div>
 
+  <!-- 物品列表 -->
   <div *ngIf="!loading && !error" class="items-list">
-    <div *ngFor="let item of filteredItems; let i = index" class="item-card" [class.selected]="selectedItem?.item_id === item.item_id">
+    <div *ngFor="let item of filteredItems" class="item-card">
       <div class="item-header">
         <div class="item-name-container">
           <h3 class="item-name" [style.color]="getStockColor(item.stock_status)">{{ item.item_name }}</h3>
-          <span class="stock-badge" [class]="'badge-' + item.stock_status.toLowerCase().replace(' ', '-')">
+          <span class="stock-badge" [class]="'badge-' + getStockStatusClass(item.stock_status)">
             <span class="badge-dot"></span>
             {{ item.stock_status }}
           </span>
         </div>
         <div class="item-actions">
-          <ion-button size="small" fill="outline" (click)="selectItem(item)">
-            <ion-icon name="create-outline"></ion-icon>
+          <ion-button size="small" fill="outline" (click)="onEditClick(item)">
+            <ion-icon name="create-outline" slot="start"></ion-icon>
             Edit
           </ion-button>
-          <ion-button size="small" fill="outline" color="danger" (click)="confirmDelete(item)">
-            <ion-icon name="trash-outline"></ion-icon>
+          <ion-button size="small" fill="outline" color="danger" (click)="onDeleteClick(item)">
+            <ion-icon name="trash-outline" slot="start"></ion-icon>
             Delete
           </ion-button>
         </div>
@@ -81,7 +142,7 @@
         </div>
         <div class="detail-row">
           <ion-icon name="cash-outline"></ion-icon>
-          <span>${{ item.price.toFixed(2) }}</span>
+          <span>${{ formatPrice(item.price) }}</span>
         </div>
         <div class="detail-row" *ngIf="item.supplier_name">
           <ion-icon name="business-outline"></ion-icon>
@@ -91,156 +152,25 @@
     </div>
   </div>
 
+  <!-- 空状态 -->
   <div *ngIf="!loading && !error && filteredItems.length === 0" class="empty-state">
     <ion-icon name="search-outline"></ion-icon>
     <h3>No Items Found</h3>
     <p>{{ searchTerm ? 'Try a different search term' : 'No items in inventory' }}</p>
   </div>
-
-  <!-- Update Form -->
-  <div *ngIf="selectedItem" class="update-form-container">
-    <h2 class="section-title">Update Item</h2>
-    <div class="section-line"></div>
-    
-    <form (ngSubmit)="updateItem()" #updateForm="ngForm">
-      <div class="form-grid">
-        <div class="form-group">
-          <ion-label>Item Name *</ion-label>
-          <ion-input
-            type="text"
-            name="item_name"
-            [(ngModel)]="selectedItem.item_name"
-            required
-            placeholder="Enter item name"
-            class="form-input"
-          ></ion-input>
-        </div>
-
-        <div class="form-group">
-          <ion-label>Category *</ion-label>
-          <ion-input
-            type="text"
-            name="category"
-            [(ngModel)]="selectedItem.category"
-            required
-            placeholder="Enter category"
-            class="form-input"
-          ></ion-input>
-        </div>
-
-        <div class="form-group">
-          <ion-label>Quantity *</ion-label>
-          <ion-input
-            type="number"
-            name="quantity"
-            [(ngModel)]="selectedItem.quantity"
-            required
-            min="0"
-            placeholder="Enter quantity"
-            class="form-input"
-          ></ion-input>
-        </div>
-
-        <div class="form-group">
-          <ion-label>Price *</ion-label>
-          <ion-input
-            type="number"
-            name="price"
-            [(ngModel)]="selectedItem.price"
-            required
-            min="0"
-            step="0.01"
-            placeholder="Enter price"
-            class="form-input"
-          ></ion-input>
-        </div>
-
-        <div class="form-group">
-          <ion-label>Supplier</ion-label>
-          <ion-input
-            type="text"
-            name="supplier_name"
-            [(ngModel)]="selectedItem.supplier_name"
-            placeholder="Enter supplier name"
-            class="form-input"
-          ></ion-input>
-        </div>
-
-        <div class="form-group">
-          <ion-label>Stock Status *</ion-label>
-          <ion-select
-            name="stock_status"
-            [(ngModel)]="selectedItem.stock_status"
-            required
-            interface="popover"
-            class="form-select"
-          >
-            <ion-select-option value="in stock">In Stock</ion-select-option>
-            <ion-select-option value="low stock">Low Stock</ion-select-option>
-            <ion-select-option value="out of stock">Out of Stock</ion-select-option>
-          </ion-select>
-        </div>
-
-        <div class="form-group full-width">
-          <ion-label>Special Note</ion-label>
-          <ion-textarea
-            name="special_note"
-            [(ngModel)]="selectedItem.special_note"
-            placeholder="Enter special notes (optional)"
-            class="form-textarea"
-          ></ion-textarea>
-        </div>
-
-        <div class="form-group full-width">
-          <ion-checkbox
-            name="featured_item"
-            [(ngModel)]="selectedItem.featured_item"
-            class="featured-checkbox"
-          >
-            Mark as Featured Item
-          </ion-checkbox>
-        </div>
-      </div>
-
-      <div class="form-actions">
-        <ion-button type="button" fill="outline" (click)="cancelUpdate()">
-          Cancel
-        </ion-button>
-        <ion-button type="submit" [disabled]="!updateForm.form.valid" class="primary-button">
-          Update Item
-        </ion-button>
-      </div>
-    </form>
-  </div>
 </ion-content>
 
-<!-- Delete Confirmation Modal -->
-<ion-modal [isOpen]="showDeleteModal" [backdropDismiss]="false">
-  <div class="modal-content">
-    <ion-header>
-      <ion-toolbar>
-        <ion-title>Confirm Delete</ion-title>
-        <ion-buttons slot="end">
-          <ion-button (click)="showDeleteModal = false">
-            <ion-icon name="close"></ion-icon>
-          </ion-button>
-        </ion-buttons>
-      </ion-toolbar>
-    </ion-header>
-    <ion-content class="modal-body">
-      <div class="delete-confirmation">
-        <ion-icon name="trash-outline" class="delete-icon"></ion-icon>
-        <h3>Are you sure?</h3>
-        <p>You are about to delete "{{ itemToDelete?.item_name }}". This action cannot be undone.</p>
-        <div class="modal-actions">
-          <ion-button fill="outline" (click)="showDeleteModal = false">
-            Cancel
-          </ion-button>
-          <ion-button color="danger" (click)="deleteItem()">
-            Delete
-          </ion-button>
-        </div>
-      </div>
-    </ion-content>
+<!-- 删除确认弹窗 -->
+<div class="delete-modal-overlay" *ngIf="showDeleteModal" (click)="closeDeleteModal()">
+  <div class="delete-modal" (click)="$event.stopPropagation()">
+    <div class="delete-modal-icon">
+      <ion-icon name="trash-outline"></ion-icon>
+    </div>
+    <h3>Confirm Delete</h3>
+    <p>Are you sure you want to delete "{{ itemToDelete?.item_name }}"?</p>
+    <div class="delete-modal-actions">
+      <ion-button fill="outline" (click)="closeDeleteModal()">Cancel</ion-button>
+      <ion-button color="danger" (click)="confirmDeleteItem()">Delete</ion-button>
+    </div>
   </div>
-</ion-modal>
+</div>

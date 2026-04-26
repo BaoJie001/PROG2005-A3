@@ -1,8 +1,20 @@
 /**
- * Tab1Page
+ * Tab1Page - Inventory List Page
  * 
  * This page displays the inventory list with search, filter, and sort functionality.
- * It provides a comprehensive view of all inventory items with real-time filtering and sorting.
+ * It fetches data from the backend API and allows users to interact with the inventory.
+ * 
+ * Features:
+ * - Display all inventory items
+ * - Statistics cards showing totals
+ * - Search by item name, category, or supplier
+ * - Filter by stock status (In Stock, Low Stock, Out of Stock)
+ * - Sort by name, category, price, or quantity
+ * - Color-coded stock status (Green/Orange/Red)
+ * - Refresh button to reload data
+ * - Help button to show usage instructions
+ * 
+ * @component Tab1Page
  */
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
@@ -35,27 +47,47 @@ import { Subscription } from 'rxjs';
   imports: [IonicModule, CommonModule, FormsModule]
 })
 export class Tab1Page implements OnInit, OnDestroy {
-  // Inventory data
-  items: InventoryItem[] = [];           // All items from API
-  filteredItems: InventoryItem[] = [];     // Items after filtering and sorting
+  // ==================== DATA PROPERTIES ====================
   
-  // UI state
-  searchTerm: string = '';                // Search input value
-  selectedStatus: string = 'all';         // Selected stock status filter
-  sortField: string = 'item_name';        // Current sort field
-  stockStatuses: string[] = ['in stock', 'low stock', 'out of stock'];  // Available stock statuses
-  loading = true;                         // Loading state
-  error = '';                             // Error message
+  /** All inventory items fetched from the API */
+  items: InventoryItem[] = [];
   
-  // Subscription for API calls
+  /** Items after applying search, filter, and sort operations */
+  filteredItems: InventoryItem[] = [];
+  
+  // ==================== UI STATE PROPERTIES ====================
+  
+  /** Current search term entered by the user */
+  searchTerm: string = '';
+  
+  /** Currently selected stock status filter ('all', 'in stock', 'low stock', 'out of stock') */
+  selectedStatus: string = 'all';
+  
+  /** Current sort field ('item_name', 'category', 'price', 'quantity') */
+  sortField: string = 'item_name';
+  
+  /** Available stock status options for filter buttons */
+  stockStatuses: string[] = ['in stock', 'low stock', 'out of stock'];
+  
+  /** Indicates whether data is currently being loaded */
+  loading = true;
+  
+  /** Error message to display if API call fails */
+  error = '';
+  
+  // ==================== SUBSCRIPTIONS ====================
+  
+  /** Subscription to the API call for cleanup to prevent memory leaks */
   private inventorySubscription: Subscription | null = null;
 
+  // ==================== LIFECYCLE HOOKS ====================
+  
   /**
-   * Constructor
+   * Constructor - Initializes the component and registers icons
    * @param inventoryService - Service for inventory API operations
    */
   constructor(private inventoryService: InventoryService) {
-    // Register required icons for the page
+    // Register all required icons for this page
     addIcons({
       refreshOutline,
       helpCircleOutline,
@@ -74,16 +106,16 @@ export class Tab1Page implements OnInit, OnDestroy {
   }
 
   /**
-   * Initialize the component
-   * Loads inventory items on component initialization
+   * ngOnInit lifecycle hook - Called after component initialization
+   * Loads inventory items when the page is first created
    */
   ngOnInit() {
     this.loadItems();
   }
 
   /**
-   * Clean up resources
-   * Unsubscribes from API calls to prevent memory leaks
+   * ngOnDestroy lifecycle hook - Called before component destruction
+   * Cleans up subscriptions to prevent memory leaks
    */
   ngOnDestroy() {
     if (this.inventorySubscription) {
@@ -91,9 +123,12 @@ export class Tab1Page implements OnInit, OnDestroy {
     }
   }
 
+  // ==================== DATA FETCHING METHODS ====================
+  
   /**
-   * Load inventory items from API
+   * Loads all inventory items from the API
    * Handles loading state and error handling
+   * Once data is received, applies filters and sorting
    */
   loadItems() {
     this.loading = true;
@@ -121,130 +156,160 @@ export class Tab1Page implements OnInit, OnDestroy {
   }
 
   /**
-   * Refresh inventory data
-   * Reloads items from the API
+   * Refresh button handler - Reloads all inventory data from the API
+   * Called when user clicks the refresh icon in the header
    */
   refresh() {
-    // Force a full page reload to ensure data is refreshed in Android
-    window.location.reload();
+    this.loadItems();
   }
 
+  // ==================== SEARCH METHODS ====================
+  
   /**
-   * Handle search input changes
-   * Applies filters and sorting when search term changes
+   * Handles search input changes
+   * Updates search term and reapplies filters and sorting
+   * @param event - Input change event containing the new search value
    */
-  onSearchChange() {
+  onSearchChange(event: any) {
+    this.searchTerm = event.target.value;
     this.applyFiltersAndSort();
   }
 
   /**
-   * Filter items by stock status
-   * @param status - Stock status to filter by
-   */
-  filterByStatus(status: string) {
-    this.selectedStatus = status;
-    this.applyFiltersAndSort();
-  }
-
-  /**
-   * Handle sort field changes
-   * Applies filters and sorting when sort field changes
-   */
-  onSortChange() {
-    this.applyFiltersAndSort();
-  }
-
-  /**
-   * Clear search input
-   * Resets search term and applies filters
+   * Clears the search input field
+   * Resets search term and reapplies filters and sorting
    */
   clearSearch() {
     this.searchTerm = '';
     this.applyFiltersAndSort();
   }
 
+  // ==================== FILTER METHODS ====================
+  
   /**
-   * Apply search, filter, and sort operations
-   * This is the core method that processes the inventory data based on user input
+   * Filters items by stock status
+   * Updates selected status and reapplies filters and sorting
+   * @param status - Stock status to filter by ('all', 'in stock', 'low stock', 'out of stock')
+   */
+  filterByStatus(status: string) {
+    console.log('Filter by status:', status);
+    this.selectedStatus = status;
+    this.applyFiltersAndSort();
+  }
+
+  // ==================== SORT METHODS ====================
+  
+  /**
+   * Handles sort field changes
+   * Updates sort field and reapplies filters and sorting
+   * @param event - Change event containing the new sort field value
+   */
+  onSortChange(event: any) {
+    console.log('Sort changed:', event.target.value);
+    this.sortField = event.target.value;
+    this.applyFiltersAndSort();
+  }
+
+  // ==================== CORE PROCESSING METHOD ====================
+  
+  /**
+   * Core method that applies search, filter, and sort operations to the inventory data
+   * This is called whenever the user interacts with search, filter, or sort controls
+   * 
+   * Processing steps:
+   * 1. Create a copy of the original items array
+   * 2. Apply search filter if search term exists
+   * 3. Apply status filter if not 'all'
+   * 4. Apply sorting based on selected field
+   * 5. Store the result in filteredItems for display
    */
   applyFiltersAndSort() {
-    // Apply search filter
-    let filtered = this.items;
+    // Step 1: Create a copy of the original items
+    let filtered = [...this.items];
     
+    // Step 2: Apply search filter - matches item name, category, or supplier
     if (this.searchTerm.trim()) {
       const term = this.searchTerm.toLowerCase().trim();
       filtered = filtered.filter(item => {
         return (
-          item.item_name.toLowerCase().includes(term) ||
-          item.category.toLowerCase().includes(term) ||
+          (item.item_name && item.item_name.toLowerCase().includes(term)) ||
+          (item.category && item.category.toLowerCase().includes(term)) ||
           (item.supplier_name && item.supplier_name.toLowerCase().includes(term))
         );
       });
     }
 
-    // Apply status filter
+    // Step 3: Apply status filter - filters by stock status
     if (this.selectedStatus !== 'all') {
       filtered = filtered.filter(item => {
-        const itemStatus = item.stock_status?.toLowerCase() || '';
-        const selectedStatus = this.selectedStatus.toLowerCase();
-        return itemStatus === selectedStatus;
+        const itemStatus = (item.stock_status || '').toLowerCase();
+        return itemStatus === this.selectedStatus.toLowerCase();
       });
     }
 
-    // Apply sorting
-    filtered.sort((a, b) => {
-      const aValue = a[this.sortField as keyof InventoryItem];
-      const bValue = b[this.sortField as keyof InventoryItem];
-      
-      // Handle undefined values
-      if (aValue === undefined && bValue === undefined) return 0;
-      if (aValue === undefined) return 1;
-      if (bValue === undefined) return -1;
-      
-      // Handle string comparison
-      if (typeof aValue === 'string' && typeof bValue === 'string') {
-        return aValue.localeCompare(bValue);
-      }
-      
-      // Handle numeric comparison
-      if (aValue < bValue) {
-        return -1;
-      }
-      if (aValue > bValue) {
-        return 1;
-      }
-      return 0;
-    });
+    // Step 4: Apply sorting based on selected field
+    // Handle string comparison for name and category
+    const aValue = filtered[0]?.[this.sortField as keyof InventoryItem];
+    const bValue = filtered[1]?.[this.sortField as keyof InventoryItem];
+    
+    if (typeof aValue === 'string' && typeof bValue === 'string') {
+      // String sorting (for name and category)
+      filtered.sort((a, b) => {
+        const valA = (a[this.sortField as keyof InventoryItem] as string || '').toLowerCase();
+        const valB = (b[this.sortField as keyof InventoryItem] as string || '').toLowerCase();
+        return valA.localeCompare(valB);
+      });
+    } else {
+      // Numeric sorting (for price and quantity)
+      filtered.sort((a, b) => {
+        const valA = a[this.sortField as keyof InventoryItem] as number || 0;
+        const valB = b[this.sortField as keyof InventoryItem] as number || 0;
+        return valA - valB;
+      });
+    }
 
+    // Step 5: Store the processed result
     this.filteredItems = filtered;
   }
 
+  // ==================== STATISTICS METHODS ====================
+  
   /**
-   * Get number of featured items
-   * @returns Number of featured items in the filtered list
+   * Calculates the number of featured items in the filtered list
+   * Featured items are those with featured_item === 1
+   * @returns Number of featured items
    */
   getFeaturedCount() {
     return this.filteredItems.filter(item => item.featured_item === 1).length;
   }
 
   /**
-   * Get number of low stock items
-   * @returns Number of low stock items in the filtered list
+   * Calculates the number of low stock items in the filtered list
+   * Low stock items are those with stock_status === 'low stock'
+   * @returns Number of low stock items
    */
   getLowStockCount() {
     return this.filteredItems.filter(item => {
-      const itemStatus = item.stock_status?.toLowerCase() || '';
+      const itemStatus = (item.stock_status || '').toLowerCase();
       return itemStatus === 'low stock';
     }).length;
   }
 
+  // ==================== HELPER METHODS ====================
+  
   /**
-   * Get color based on stock status
-   * @param status - Stock status
-   * @returns Color code for the status
+   * Returns the color code for a given stock status
+   * Used for color-coding stock status text in the UI
+   * 
+   * @param status - Stock status string ('in stock', 'low stock', 'out of stock')
+   * @returns Hex color code
+   *   - '#10b981' (green) for In Stock
+   *   - '#f59e0b' (orange) for Low Stock
+   *   - '#ef4444' (red) for Out of Stock
+   *   - '#333' (dark gray) for unknown status
    */
   getStockColor(status: string) {
-    const lowerStatus = status?.toLowerCase() || '';
+    const lowerStatus = (status || '').toLowerCase();
     if (lowerStatus === 'in stock') return '#10b981';
     if (lowerStatus === 'low stock') return '#f59e0b';
     if (lowerStatus === 'out of stock') return '#ef4444';
@@ -252,8 +317,9 @@ export class Tab1Page implements OnInit, OnDestroy {
   }
 
   /**
-   * Show help information
-   * Displays a dialog with information about stock status colors
+   * Help button handler - Displays usage instructions
+   * Shows an alert dialog with information about stock status colors
+   * Meets the assignment requirement for a Help Widget on every page
    */
   showHelp() {
     alert('Green = In Stock\nOrange = Low Stock\nRed = Out of Stock');

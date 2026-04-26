@@ -1,9 +1,3 @@
-/**
- * Tab3Page
- * 
- * This page allows users to update and delete existing inventory items.
- * It provides a search functionality to find items by name and form to update item details.
- */
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -22,8 +16,7 @@ import {
   businessOutline,
   alertCircleOutline,
   searchOutline,
-  close,
-  checkmark
+  close
 } from 'ionicons/icons';
 import { InventoryService, InventoryItem } from '../services/inventory.service';
 import { Subscription } from 'rxjs';
@@ -36,29 +29,20 @@ import { Subscription } from 'rxjs';
   imports: [IonicModule, CommonModule, FormsModule]
 })
 export class Tab3Page implements OnInit, OnDestroy {
-  // Inventory data
-  items: InventoryItem[] = [];           // All items from API
-  filteredItems: InventoryItem[] = [];     // Items after filtering
+  items: InventoryItem[] = [];
+  filteredItems: InventoryItem[] = [];
+  selectedItem: InventoryItem | null = null;
+  itemToDelete: InventoryItem | null = null;
+  searchTerm = '';
+  loading = true;
+  error = '';
+  showDeleteModal = false;
   
-  // UI state
-  selectedItem: InventoryItem | null = null;  // Currently selected item for editing
-  itemToDelete: InventoryItem | null = null;  // Item to be deleted
-  searchTerm = '';                          // Search input value
-  loading = true;                           // Loading state
-  error = '';                               // Error message
-  showDeleteModal = false;                   // Delete confirmation modal state
-  
-  // Subscriptions for API calls
   private inventorySubscription: Subscription | null = null;
   private updateItemSubscription: Subscription | null = null;
   private deleteItemSubscription: Subscription | null = null;
 
-  /**
-   * Constructor
-   * @param inventoryService - Service for inventory API operations
-   */
   constructor(private inventoryService: InventoryService) {
-    // Register required icons for the page
     addIcons({
       refreshOutline,
       helpCircleOutline,
@@ -72,204 +56,234 @@ export class Tab3Page implements OnInit, OnDestroy {
       businessOutline,
       alertCircleOutline,
       searchOutline,
-      close,
-      checkmark
+      close
     });
   }
 
-  /**
-   * Initialize the component
-   * Loads inventory items on component initialization
-   */
   ngOnInit() {
     this.loadItems();
   }
 
-  /**
-   * Clean up resources
-   * Unsubscribes from API calls to prevent memory leaks
-   */
   ngOnDestroy() {
-    if (this.inventorySubscription) {
-      this.inventorySubscription.unsubscribe();
-    }
-    if (this.updateItemSubscription) {
-      this.updateItemSubscription.unsubscribe();
-    }
-    if (this.deleteItemSubscription) {
-      this.deleteItemSubscription.unsubscribe();
-    }
+    if (this.inventorySubscription) this.inventorySubscription.unsubscribe();
+    if (this.updateItemSubscription) this.updateItemSubscription.unsubscribe();
+    if (this.deleteItemSubscription) this.deleteItemSubscription.unsubscribe();
   }
 
-  /**
-   * Load inventory items from API
-   */
   loadItems() {
     this.loading = true;
+    this.error = '';
     
-    // Cancel any existing subscription to avoid duplicate requests
     if (this.inventorySubscription) {
       this.inventorySubscription.unsubscribe();
     }
 
     this.inventorySubscription = this.inventoryService.getAllItems().subscribe({
       next: (data: InventoryItem[]) => {
+        console.log('Items loaded:', data.length);
         this.items = data;
-        this.filteredItems = data;
+        this.filteredItems = [...data];
         this.loading = false;
-        this.error = '';
       },
       error: (err) => {
         console.error('API Error:', err);
-        this.error = `Failed to load items: ${err.message || 'Unknown error'}`;
+        this.error = 'Failed to load items: ' + (err.message || 'Unknown error');
         this.loading = false;
-        this.items = [];
-        this.filteredItems = [];
       }
     });
   }
 
-  /**
-   * Search items by name
-   * Filters items based on search term
-   */
+  onSearchInput(event: any) {
+    this.searchTerm = event.target.value;
+    this.searchItems();
+  }
+
   searchItems() {
     if (!this.searchTerm.trim()) {
-      this.filteredItems = this.items;
+      this.filteredItems = [...this.items];
       return;
     }
-
     const term = this.searchTerm.toLowerCase().trim();
     this.filteredItems = this.items.filter(item => {
       return item.item_name.toLowerCase().includes(term);
     });
+    console.log('Search results:', this.filteredItems.length);
   }
 
-  /**
-   * Clear search input
-   * Resets search term and filter
-   */
   clearSearch() {
     this.searchTerm = '';
-    this.filteredItems = this.items;
+    this.filteredItems = [...this.items];
   }
 
-  /**
-   * Select an item for editing
-   * @param item - Inventory item to edit
-   */
-  selectItem(item: InventoryItem) {
-    // Create a deep copy of the item to avoid direct modification
-    this.selectedItem = JSON.parse(JSON.stringify(item));
+  onEditClick(item: InventoryItem) {
+    console.log('Edit clicked:', item.item_name);
+    console.log('Full item:', JSON.stringify(item));
+    
+    // 创建深拷贝
+    this.selectedItem = {
+      ...item,
+      item_id: item.item_id,
+      item_name: item.item_name || '',
+      category: item.category || '',
+      quantity: item.quantity || 0,
+      price: item.price || 0,
+      supplier_name: item.supplier_name || '',
+      stock_status: item.stock_status || 'in stock',
+      featured_item: item.featured_item || 0,
+      special_note: item.special_note || ''
+    };
+    
+    // 滚动到表单
+    setTimeout(() => {
+      const formElement = document.querySelector('.update-form-container');
+      if (formElement) {
+        formElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    }, 100);
+    
+    // 提示用户已选中
+    alert(`Editing: ${item.item_name}`);
   }
 
-  /**
-   * Cancel item editing
-   * Clears the selected item
-   */
+  onDeleteClick(item: InventoryItem) {
+    console.log('Delete clicked:', item.item_name);
+    this.itemToDelete = item;
+    this.showDeleteModal = true;
+  }
+
+  updateSelectedItemField(field: string, event: any) {
+    if (this.selectedItem) {
+      let value = event.target.value;
+      if (field === 'quantity' || field === 'price') {
+        value = Number(value);
+      }
+      (this.selectedItem as any)[field] = value;
+    }
+  }
+
+  updateSelectedItemStatus(event: any) {
+    if (this.selectedItem) {
+      this.selectedItem.stock_status = event.target.value;
+    }
+  }
+
+  updateSelectedItemFeatured(event: any) {
+    if (this.selectedItem) {
+      this.selectedItem.featured_item = event.target.checked ? 1 : 0;
+    }
+  }
+
   cancelUpdate() {
     this.selectedItem = null;
   }
 
-  /**
-   * Update an inventory item
-   * Validates form data and calls API to update the item
-   */
   updateItem() {
-    if (!this.selectedItem || !this.selectedItem.item_name) return;
+    console.log('Update button clicked');
+    console.log('Selected item:', this.selectedItem);
+    
+    if (!this.selectedItem || !this.selectedItem.item_name) {
+      alert('Please select an item first');
+      return;
+    }
 
     this.loading = true;
     
-    // Cancel any existing subscription to avoid duplicate requests
     if (this.updateItemSubscription) {
       this.updateItemSubscription.unsubscribe();
     }
 
-    this.updateItemSubscription = this.inventoryService.updateItem(this.selectedItem.item_name, this.selectedItem).subscribe({
-      next: (updatedItem) => {
-        console.log('Item updated successfully:', updatedItem);
+    const updateData = {
+      item_name: this.selectedItem.item_name,
+      category: this.selectedItem.category,
+      quantity: Number(this.selectedItem.quantity),
+      price: Number(this.selectedItem.price),
+      supplier_name: this.selectedItem.supplier_name || '',
+      stock_status: this.selectedItem.stock_status,
+      featured_item: this.selectedItem.featured_item ? 1 : 0,
+      special_note: this.selectedItem.special_note || ''
+    };
+
+    console.log('Update data:', updateData);
+
+    this.updateItemSubscription = this.inventoryService.updateItem(this.selectedItem.item_name, updateData).subscribe({
+      next: (result) => {
+        console.log('Update success:', result);
+        alert('Item updated successfully!');
         this.loadItems();
         this.selectedItem = null;
-        // Show success message
-        alert('Item updated successfully!');
+        this.loading = false;
       },
       error: (err) => {
-        console.error('Error updating item:', err);
-        this.error = `Failed to update item: ${err.message || 'Unknown error'}`;
+        console.error('Update error:', err);
+        alert('Failed to update item: ' + (err.message || 'Unknown error'));
         this.loading = false;
       }
     });
   }
 
-  /**
-   * Confirm item deletion
-   * Shows delete confirmation modal
-   * @param item - Inventory item to delete
-   */
-  confirmDelete(item: InventoryItem) {
-    this.itemToDelete = item;
-    this.showDeleteModal = true;
+  closeDeleteModal() {
+    this.showDeleteModal = false;
+    this.itemToDelete = null;
   }
 
-  /**
-   * Delete an inventory item
-   * Calls API to delete the item
-   */
-  deleteItem() {
-    if (!this.itemToDelete || !this.itemToDelete.item_name) return;
+  confirmDeleteItem() {
+    if (!this.itemToDelete || !this.itemToDelete.item_name) {
+      return;
+    }
 
     this.loading = true;
     
-    // Cancel any existing subscription to avoid duplicate requests
     if (this.deleteItemSubscription) {
       this.deleteItemSubscription.unsubscribe();
     }
 
     this.deleteItemSubscription = this.inventoryService.deleteItem(this.itemToDelete.item_name).subscribe({
       next: () => {
-        console.log('Item deleted successfully:', this.itemToDelete);
-        this.loadItems();
-        this.showDeleteModal = false;
-        this.itemToDelete = null;
-        // Show success message
+        console.log('Delete success');
         alert('Item deleted successfully!');
+        this.loadItems();
+        this.closeDeleteModal();
+        this.loading = false;
       },
       error: (err) => {
-        console.error('Error deleting item:', err);
-        this.error = `Failed to delete item: ${err.message || 'Unknown error'}`;
+        console.error('Delete error:', err);
+        if (err.message && err.message.includes('Laptop')) {
+          alert('Cannot delete "Laptop" item. This item is protected.');
+        } else {
+          alert('Failed to delete item: ' + (err.message || 'Unknown error'));
+        }
         this.loading = false;
-        this.showDeleteModal = false;
+        this.closeDeleteModal();
       }
     });
   }
 
-  /**
-   * Refresh inventory data
-   * Reloads items from the API
-   */
   refresh() {
-    // Force a full page reload to ensure data is refreshed in Android
-    window.location.reload();
+    console.log('Refresh clicked');
+    this.loadItems();
   }
 
-  /**
-   * Get color based on stock status
-   * @param status - Stock status
-   * @returns Color code for the status
-   */
+  formatPrice(price: number): string {
+    return price !== undefined && price !== null ? price.toFixed(2) : '0.00';
+  }
+
+  getStockStatusClass(status: string): string {
+    const lowerStatus = (status || '').toLowerCase();
+    if (lowerStatus === 'in stock') return 'in-stock';
+    if (lowerStatus === 'low stock') return 'low-stock';
+    if (lowerStatus === 'out of stock') return 'out-of-stock';
+    return '';
+  }
+
   getStockColor(status: string) {
-    const lowerStatus = status?.toLowerCase() || '';
+    const lowerStatus = (status || '').toLowerCase();
     if (lowerStatus === 'in stock') return '#10b981';
     if (lowerStatus === 'low stock') return '#f59e0b';
     if (lowerStatus === 'out of stock') return '#ef4444';
     return '#333';
   }
 
-  /**
-   * Show help information
-   * Displays a dialog with information about page functionality
-   */
   showHelp() {
-    alert('Green = In Stock\nOrange = Low Stock\nRed = Out of Stock\n\nSearch for items by name, then click Edit to update or Delete to remove items.');
+    alert('Green = In Stock\nOrange = Low Stock\nRed = Out of Stock\n\nSearch for items by name, then click Edit to update or Delete to remove items.\n\nNote: "Laptop" cannot be deleted.');
   }
 }

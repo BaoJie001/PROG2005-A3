@@ -25,115 +25,58 @@
     <h2 class="section-title">Item Details</h2>
     <div class="section-line"></div>
     
-    <form (ngSubmit)="addItem()" #itemForm="ngForm">
-      <div class="form-grid">
-        <div class="form-group">
-          <ion-label>Item Name *</ion-label>
-          <ion-input
-            type="text"
-            name="item_name"
-            [(ngModel)]="newItem.item_name"
-            required
-            placeholder="Enter item name"
-            class="form-input"
-          ></ion-input>
-        </div>
-
-        <div class="form-group">
-          <ion-label>Category *</ion-label>
-          <ion-input
-            type="text"
-            name="category"
-            [(ngModel)]="newItem.category"
-            required
-            placeholder="Enter category"
-            class="form-input"
-          ></ion-input>
-        </div>
-
-        <div class="form-group">
-          <ion-label>Quantity *</ion-label>
-          <ion-input
-            type="number"
-            name="quantity"
-            [(ngModel)]="newItem.quantity"
-            required
-            min="0"
-            placeholder="Enter quantity"
-            class="form-input"
-          ></ion-input>
-        </div>
-
-        <div class="form-group">
-          <ion-label>Price *</ion-label>
-          <ion-input
-            type="number"
-            name="price"
-            [(ngModel)]="newItem.price"
-            required
-            min="0"
-            step="0.01"
-            placeholder="Enter price"
-            class="form-input"
-          ></ion-input>
-        </div>
-
-        <div class="form-group">
-          <ion-label>Supplier</ion-label>
-          <ion-input
-            type="text"
-            name="supplier_name"
-            [(ngModel)]="newItem.supplier_name"
-            placeholder="Enter supplier name"
-            class="form-input"
-          ></ion-input>
-        </div>
-
-        <div class="form-group">
-          <ion-label>Stock Status *</ion-label>
-          <ion-select
-            name="stock_status"
-            [(ngModel)]="newItem.stock_status"
-            required
-            interface="popover"
-            class="form-select"
-          >
-            <ion-select-option value="in stock">In Stock</ion-select-option>
-            <ion-select-option value="low stock">Low Stock</ion-select-option>
-            <ion-select-option value="out of stock">Out of Stock</ion-select-option>
-          </ion-select>
-        </div>
-
-        <div class="form-group full-width">
-          <ion-label>Special Note</ion-label>
-          <ion-textarea
-            name="special_note"
-            [(ngModel)]="newItem.special_note"
-            placeholder="Enter special notes (optional)"
-            class="form-textarea"
-          ></ion-textarea>
-        </div>
-
-        <div class="form-group full-width">
-          <ion-checkbox
-            name="featured_item"
-            [(ngModel)]="newItem.featured_item"
-            class="featured-checkbox"
-          >
-            Mark as Featured Item
-          </ion-checkbox>
-        </div>
+    <div class="form-grid">
+      <div class="form-group">
+        <ion-label>Item Name *</ion-label>
+        <input type="text" class="form-input-native" placeholder="Enter item name" [value]="newItem.item_name" (input)="updateItemName($event)">
       </div>
 
-      <div class="form-actions">
-        <ion-button type="button" fill="outline" (click)="resetForm()">
-          Reset
-        </ion-button>
-        <ion-button type="submit" [disabled]="!itemForm.form.valid" class="primary-button">
-          Add Item
-        </ion-button>
+      <div class="form-group">
+        <ion-label>Category *</ion-label>
+        <input type="text" class="form-input-native" placeholder="Enter category" [value]="newItem.category" (input)="updateCategory($event)">
       </div>
-    </form>
+
+      <div class="form-group">
+        <ion-label>Quantity *</ion-label>
+        <input type="number" class="form-input-native" placeholder="Enter quantity" [value]="newItem.quantity" (input)="updateQuantity($event)">
+      </div>
+
+      <div class="form-group">
+        <ion-label>Price *</ion-label>
+        <input type="number" class="form-input-native" placeholder="Enter price" [value]="newItem.price" (input)="updatePrice($event)">
+      </div>
+
+      <div class="form-group">
+        <ion-label>Supplier</ion-label>
+        <input type="text" class="form-input-native" placeholder="Enter supplier name" [value]="newItem.supplier_name" (input)="updateSupplier($event)">
+      </div>
+
+      <div class="form-group">
+        <ion-label>Stock Status *</ion-label>
+        <select class="form-select-native" [value]="newItem.stock_status" (change)="updateStockStatus($event)">
+          <option value="in stock">In Stock</option>
+          <option value="low stock">Low Stock</option>
+          <option value="out of stock">Out of Stock</option>
+        </select>
+      </div>
+
+      <div class="form-group full-width">
+        <ion-label>Special Note</ion-label>
+        <textarea class="form-textarea-native" placeholder="Enter special notes (optional)" [value]="newItem.special_note" (input)="updateSpecialNote($event)"></textarea>
+      </div>
+
+      <div class="form-group full-width">
+        <label class="checkbox-label">
+          <input type="checkbox" [checked]="newItem.featured_item === 1" (change)="updateFeatured($event)">
+          <span>Mark as Featured Item</span>
+        </label>
+      </div>
+    </div>
+
+    <div class="form-actions">
+      <ion-button type="button" fill="outline" (click)="resetForm()">Reset</ion-button>
+      <ion-button type="button" (click)="addItem()" class="primary-button">Add Item</ion-button>
+    </div>
   </div>
 
   <div class="section-header">
