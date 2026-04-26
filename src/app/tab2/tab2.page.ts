@@ -190,7 +190,8 @@ export class Tab2Page implements OnInit, OnDestroy {
    * Reloads featured items from the API
    */
   refresh() {
-    this.loadFeaturedItems();
+    // Force a full page reload to ensure data is refreshed in Android
+    window.location.reload();
   }
 
   /**
@@ -211,6 +212,6 @@ export class Tab2Page implements OnInit, OnDestroy {
    * Displays a dialog with information about stock status colors and form usage
    */
   showHelp() {
-    alert('🟢 Green = In Stock\n🟠 Orange = Low Stock\n🔴 Red = Out of Stock\n\nTo add a new item, fill out all required fields marked with *');
+    alert('Green = In Stock\nOrange = Low Stock\nRed = Out of Stock\n\nTo add a new item, fill out all required fields marked with *');
   }
 }

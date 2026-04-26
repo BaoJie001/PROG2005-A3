@@ -125,7 +125,8 @@ export class Tab1Page implements OnInit, OnDestroy {
    * Reloads items from the API
    */
   refresh() {
-    this.loadItems();
+    // Force a full page reload to ensure data is refreshed in Android
+    window.location.reload();
   }
 
   /**
@@ -255,6 +256,6 @@ export class Tab1Page implements OnInit, OnDestroy {
    * Displays a dialog with information about stock status colors
    */
   showHelp() {
-    alert('🟢 Green = In Stock\n🟠 Orange = Low Stock\n🔴 Red = Out of Stock');
+    alert('Green = In Stock\nOrange = Low Stock\nRed = Out of Stock');
   }
 }

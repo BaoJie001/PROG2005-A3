@@ -248,7 +248,8 @@ export class Tab3Page implements OnInit, OnDestroy {
    * Reloads items from the API
    */
   refresh() {
-    this.loadItems();
+    // Force a full page reload to ensure data is refreshed in Android
+    window.location.reload();
   }
 
   /**
@@ -269,6 +270,6 @@ export class Tab3Page implements OnInit, OnDestroy {
    * Displays a dialog with information about page functionality
    */
   showHelp() {
-    alert('🟢 Green = In Stock\n🟠 Orange = Low Stock\n🔴 Red = Out of Stock\n\nSearch for items by name, then click Edit to update or Delete to remove items.');
+    alert('Green = In Stock\nOrange = Low Stock\nRed = Out of Stock\n\nSearch for items by name, then click Edit to update or Delete to remove items.');
   }
 }
